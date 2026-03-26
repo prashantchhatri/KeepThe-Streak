@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#4f46e5">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link rel="apple-touch-icon" href="/images/logo.png">
     <link rel="manifest" href="/manifest.json">
 
     <title>{{ config('app.name', 'Laravel') }}</title>
@@ -30,36 +32,53 @@
         @endisset
 
         <!-- Page Content -->
-        <main class="pb-24">
+        <main class="pb-28">
             {{ $slot }}
         </main>
 
-        <footer class="mx-auto mt-10 mb-24 w-full max-w-md border-t border-gray-200 px-4 pt-4 text-center text-xs text-gray-400">
+        <footer class="mx-auto mt-10 mb-28 w-full max-w-md border-t border-gray-200 px-4 pt-4 text-center text-xs text-gray-400">
             {{ __('Idea by') }}
             <span class="font-medium text-gray-600">Prashant Chhatri</span>
         </footer>
 
-        <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur">
-            <div class="mx-auto flex w-full max-w-md items-center justify-around px-4 py-2">
-                <a href="{{ route('dashboard') }}" @class([
-                    'inline-flex min-h-10 flex-col items-center justify-center rounded-lg px-3 text-xs font-medium transition duration-200',
-                    'text-indigo-600' => request()->routeIs('dashboard'),
-                    'text-slate-500 hover:text-slate-700' => ! request()->routeIs('dashboard'),
-                ])>
-                    {{ __('Dashboard') }}
-                </a>
+        @php
+            $isDashboardRoute = request()->routeIs('dashboard') || request()->routeIs('streaks.*');
+            $isProfileRoute = request()->routeIs('profile.*');
+        @endphp
+        <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white">
+            <div class="mx-auto w-full max-w-md">
+                <div class="flex h-14 items-center justify-around px-4">
+                    <a href="{{ route('dashboard') }}" @class([
+                        'inline-flex min-h-10 flex-col items-center justify-center rounded-lg px-3 transition duration-200',
+                        'text-indigo-600' => $isDashboardRoute,
+                        'text-gray-400 hover:text-gray-600' => ! $isDashboardRoute,
+                    ])>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10.707 1.707a1 1 0 00-1.414 0l-7 7A1 1 0 003 10.414V17a2 2 0 002 2h3a1 1 0 001-1v-3a1 1 0 011-1h0a1 1 0 011 1v3a1 1 0 001 1h3a2 2 0 002-2v-6.586a1 1 0 00-.293-.707l-7-7z" />
+                        </svg>
+                        <span class="text-[11px] font-medium">{{ __('Dashboard') }}</span>
+                    </a>
 
-                <a href="{{ route('dashboard', ['add' => 1]) }}" class="inline-flex min-h-10 items-center justify-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition duration-200 hover:bg-indigo-500 active:scale-95">
-                    + {{ __('Add') }}
-                </a>
+                    <div class="flex flex-col items-center">
+                        <a href="{{ route('dashboard', ['add' => 1]) }}" class="-mt-8 inline-flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg transition duration-200 hover:bg-indigo-500 active:scale-95" aria-label="{{ __('Add Streak') }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 4a1 1 0 011 1v4h4a1 1 0 110 2h-4v4a1 1 0 11-2 0v-4H5a1 1 0 110-2h4V5a1 1 0 011-1z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        <span class="text-[11px] text-gray-400">{{ __('Add') }}</span>
+                    </div>
 
-                <a href="{{ route('profile.edit') }}" @class([
-                    'inline-flex min-h-10 flex-col items-center justify-center rounded-lg px-3 text-xs font-medium transition duration-200',
-                    'text-indigo-600' => request()->routeIs('profile.*'),
-                    'text-slate-500 hover:text-slate-700' => ! request()->routeIs('profile.*'),
-                ])>
-                    {{ __('Profile') }}
-                </a>
+                    <a href="{{ route('profile.show') }}" @class([
+                        'inline-flex min-h-10 flex-col items-center justify-center rounded-lg px-3 transition duration-200',
+                        'text-indigo-600' => $isProfileRoute,
+                        'text-gray-400 hover:text-gray-600' => ! $isProfileRoute,
+                    ])>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 2a4 4 0 100 8 4 4 0 000-8zM4 16a6 6 0 1112 0H4z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-[11px] font-medium">{{ __('Profile') }}</span>
+                    </a>
+                </div>
             </div>
         </nav>
     </div>

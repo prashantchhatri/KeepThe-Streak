@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class Streak extends Model
@@ -29,37 +30,43 @@ class Streak extends Model
 
     public function streakLogs(): HasMany
     {
+        return $this->logs();
+    }
+
+    public function logs(): HasMany
+    {
         return $this->hasMany(StreakLog::class);
     }
 
     public function getStatsAttribute(): array
     {
-        $logs = $this->relationLoaded('streakLogs')
-            ? $this->streakLogs->sortBy('date')->values()
-            : $this->streakLogs()->orderBy('date')->get();
-
-        if ($logs->isEmpty()) {
-            return [
-                'current' => 0,
-                'longest' => 0,
-                'percentage' => 0,
-            ];
+        $today = today()->startOfDay();
+        $startDate = ($this->created_at ?? $today)->copy()->startOfDay();
+        if ($startDate->gt($today)) {
+            $startDate = $today->copy();
         }
 
+        $logs = match (true) {
+            $this->relationLoaded('logs') => $this->logs->sortBy('date')->values(),
+            $this->relationLoaded('streakLogs') => $this->streakLogs->sortBy('date')->values(),
+            default => $this->logs()->orderBy('date')->get(),
+        };
+        $logs = $logs->filter(fn (StreakLog $log) => $log->date->lte($today))->values();
+
         return [
-            'current' => $this->calculateCurrentStreak($logs),
-            'longest' => $this->calculateLongestStreak($logs),
-            'percentage' => $this->calculateSuccessPercentage($logs),
+            'current' => $this->calculateCurrentStreak($logs, $startDate, $today),
+            'longest' => $this->calculateLongestStreak($logs, $startDate, $today),
+            'percentage' => $this->calculateSuccessPercentage($logs, $startDate, $today),
         ];
     }
 
-    private function calculateCurrentStreak(Collection $logs): int
+    private function calculateCurrentStreak(Collection $logs, Carbon $startDate, Carbon $today): int
     {
         $logsByDate = $logs->keyBy(fn (StreakLog $log) => $log->date->toDateString());
-        $cursor = today();
+        $cursor = $today->copy();
         $current = 0;
 
-        while (true) {
+        while ($cursor->gte($startDate)) {
             $entry = $logsByDate->get($cursor->toDateString());
 
             if (! $entry || $entry->status !== 'done') {
@@ -73,41 +80,40 @@ class Streak extends Model
         return $current;
     }
 
-    private function calculateLongestStreak(Collection $logs): int
+    private function calculateLongestStreak(Collection $logs, Carbon $startDate, Carbon $today): int
     {
+        $logsByDate = $logs->keyBy(fn (StreakLog $log) => $log->date->toDateString());
+        $cursor = $startDate->copy();
         $running = 0;
         $longest = 0;
-        $previousDoneDate = null;
 
-        foreach ($logs as $log) {
-            if ($log->status !== 'done') {
+        while ($cursor->lte($today)) {
+            $entry = $logsByDate->get($cursor->toDateString());
+
+            if (! $entry || $entry->status !== 'done') {
                 $running = 0;
-                $previousDoneDate = null;
-                continue;
-            }
-
-            if ($previousDoneDate && $log->date->isSameDay($previousDoneDate->copy()->addDay())) {
-                $running++;
             } else {
-                $running = 1;
+                $running++;
             }
 
-            $previousDoneDate = $log->date->copy();
             $longest = max($longest, $running);
+            $cursor->addDay();
         }
 
         return $longest;
     }
 
-    private function calculateSuccessPercentage(Collection $logs): int
+    private function calculateSuccessPercentage(Collection $logs, Carbon $startDate, Carbon $today): int
     {
-        $totalDays = $logs->count();
+        $totalDays = $startDate->diffInDays($today) + 1;
 
         if ($totalDays === 0) {
             return 0;
         }
 
-        $doneDays = $logs->where('status', 'done')->count();
+        $doneDays = $logs
+            ->filter(fn (StreakLog $log) => $log->status === 'done' && $log->date->between($startDate, $today))
+            ->count();
 
         return (int) round(($doneDays / $totalDays) * 100);
     }

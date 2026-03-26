@@ -1,11 +1,11 @@
-const CACHE_NAME = 'keepthestreak-v1';
-const URLS_TO_CACHE = ['/', '/dashboard', '/manifest.json', '/images/logo.png'];
+const CACHE_NAME = 'keepthestreak-v2';
+const STATIC_ASSETS = ['/manifest.json', '/images/logo.png'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches
             .open(CACHE_NAME)
-            .then((cache) => cache.addAll(URLS_TO_CACHE))
+            .then((cache) => cache.addAll(STATIC_ASSETS))
             .then(() => self.skipWaiting())
     );
 });
@@ -22,28 +22,56 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    if (event.request.method !== 'GET') {
+    const request = event.request;
+    const url = new URL(request.url);
+
+    if (request.method !== 'GET') {
+        return;
+    }
+
+    if (url.origin !== self.location.origin) {
+        return;
+    }
+
+    const isStaticRequest =
+        url.pathname.startsWith('/build/') ||
+        url.pathname.startsWith('/images/') ||
+        url.pathname === '/manifest.json' ||
+        url.pathname.endsWith('.js') ||
+        url.pathname.endsWith('.css') ||
+        url.pathname.endsWith('.png') ||
+        url.pathname.endsWith('.svg') ||
+        url.pathname.endsWith('.ico');
+
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request).catch(() => caches.match('/dashboard') || caches.match('/'))
+        );
+
+        return;
+    }
+
+    if (!isStaticRequest) {
+        event.respondWith(fetch(request));
         return;
     }
 
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-                return cachedResponse;
-            }
+        caches.match(request).then((cachedResponse) => {
+            if (cachedResponse) return cachedResponse;
 
-            return fetch(event.request)
+            return fetch(request)
                 .then((networkResponse) => {
-                    if (!networkResponse || networkResponse.status !== 200 || event.request.url.includes('chrome-extension://')) {
+                    if (!networkResponse || networkResponse.status !== 200) {
                         return networkResponse;
                     }
 
                     const responseClone = networkResponse.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+                    caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
 
                     return networkResponse;
                 })
-                .catch(() => cachedResponse);
+                .catch(() => cachedResponse || fetch(request));
         })
     );
 });

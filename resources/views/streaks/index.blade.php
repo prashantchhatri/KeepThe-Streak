@@ -2,14 +2,15 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h1 class="text-base font-semibold text-slate-900">{{ __('Dashboard') }}</h1>
-            <span class="text-xs text-slate-400">{{ __('Today') }}</span>
+            <span class="text-xs text-slate-400">{{ now()->format('d M Y') }}</span>
         </div>
     </x-slot>
 
     @php
         $todayDate = today()->toDateString();
+        $hasStreaks = $streaks->count() > 0;
         $initialStreakState = $streaks->mapWithKeys(function ($streak) use ($todayDate) {
-            $todayLog = $streak->streakLogs->first(fn ($log) => $log->date->toDateString() === $todayDate);
+            $todayLog = $streak->logs->first(fn ($log) => $log->date->toDateString() === $todayDate);
 
             return [
                 (string) $streak->id => [
@@ -27,7 +28,10 @@
             streakIncreased: @js((bool) session('streak_increased')),
             initialStates: @js($initialStreakState),
             csrfToken: @js(csrf_token()),
-            hasStreaks: @js($streaks->isNotEmpty()),
+            hasStreaks: @js($hasStreaks),
+            todayDate: @js($todayDate),
+            chartData: @js($chartData ?? []),
+            totalStreaks: @js($totalStreaks ?? 0),
         })"
         x-init="init()"
     >
@@ -69,17 +73,17 @@
                 </div>
             @endif
 
-            <div x-show="showInstallPrompt" x-cloak>
-                <button
-                    type="button"
-                    @click="installApp()"
-                    class="inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 hover:bg-indigo-500 active:scale-95"
-                >
-                    {{ __('Install App 📲') }}
-                </button>
-            </div>
+            @if ($hasStreaks)
+                <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div class="mb-3 flex items-center justify-between gap-3">
+                        <h2 class="text-sm font-semibold text-slate-900">{{ __('Your Consistency (Last 7 Days)') }}</h2>
+                        <span class="text-xs text-slate-400">{{ __('Last 7 days') }}</span>
+                    </div>
+                    <div class="h-32">
+                        <canvas x-ref="consistencyChartCanvas" class="h-32 w-full"></canvas>
+                    </div>
+                </div>
 
-            @if ($streaks->isNotEmpty())
                 <div class="sticky top-2 z-10">
                     <form method="POST" action="{{ route('streaks.mark-all-done') }}" @submit.prevent="markAllDone($event)">
                         @csrf
@@ -94,7 +98,7 @@
                 </div>
             @endif
 
-            @if ($streaks->isNotEmpty())
+            @if ($hasStreaks)
                 <div class="mb-6 flex items-center justify-between gap-3">
                     <div>
                         <h1 class="text-xl font-semibold text-slate-900">{{ __('Your Streaks') }}</h1>
@@ -154,11 +158,11 @@
                 </form>
             </div>
 
-            @if ($streaks->isNotEmpty())
+            @if ($hasStreaks)
                 <div class="mt-4 space-y-4">
                     @foreach ($streaks as $streak)
                         @php
-                            $todayLog = $streak->streakLogs->first(fn ($log) => $log->date->toDateString() === $todayDate);
+                            $todayLog = $streak->logs->first(fn ($log) => $log->date->toDateString() === $todayDate);
                             $isMarkedToday = (bool) $todayLog;
                             $stats = $streak->stats;
                             $isBestEver = $stats['longest'] > 0 && $stats['current'] === $stats['longest'];
@@ -200,9 +204,8 @@
                                     </div>
                                 </div>
 
-                                <form method="POST" action="{{ route('streaks.destroy', $streak) }}" onsubmit="return confirm('Delete this streak?');">
+                                <form method="POST" action="{{ route('streaks.delete', $streak->id) }}" onsubmit="return confirm('Delete this streak?');">
                                     @csrf
-                                    @method('DELETE')
                                     <button type="submit" class="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg bg-rose-50 px-2 text-rose-600 transition duration-200 hover:bg-rose-100 active:scale-95" aria-label="{{ __('Delete streak') }}">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd" d="M8.5 2a1 1 0 00-1 1v1H5a1 1 0 100 2h.35l.69 9.08A2 2 0 008.03 17h3.94a2 2 0 001.99-1.92L14.65 6H15a1 1 0 100-2h-2.5V3a1 1 0 00-1-1h-3zM9.5 4V3h1v1h-1zM8 8a1 1 0 012 0v5a1 1 0 11-2 0V8zm4-1a1 1 0 00-1 1v5a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -265,6 +268,16 @@
                 </div>
             @endif
         </div>
+
+        <div x-show="showInstallPrompt" x-cloak class="fixed inset-x-0 bottom-20 z-40 flex justify-center px-4">
+            <button
+                type="button"
+                @click="installApp()"
+                class="inline-flex min-h-10 items-center justify-center rounded-full bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition duration-200 hover:bg-indigo-500 active:scale-95"
+            >
+                {{ __('Install App 📲') }}
+            </button>
+        </div>
     </div>
 
     <script>
@@ -275,6 +288,10 @@
                 streakStates: config.initialStates ?? {},
                 csrfToken: config.csrfToken,
                 hasStreaks: config.hasStreaks,
+                todayDate: config.todayDate ?? null,
+                chartData: config.chartData ?? [],
+                totalStreaks: Number(config.totalStreaks ?? 0),
+                chartResizeTimer: null,
                 markingAll: false,
                 pendingById: {},
                 showToast: false,
@@ -291,6 +308,13 @@
                         }, 2000);
                     }
 
+                    this.$nextTick(() => {
+                        this.renderConsistencyChart();
+                    });
+                    window.addEventListener('resize', () => {
+                        clearTimeout(this.chartResizeTimer);
+                        this.chartResizeTimer = setTimeout(() => this.renderConsistencyChart(), 120);
+                    });
                     this.setupDailyReminder();
                     this.setupInstallPrompt();
                 },
@@ -333,6 +357,101 @@
                     }, 1800);
                 },
 
+                renderConsistencyChart() {
+                    if (!this.hasStreaks || !this.$refs.consistencyChartCanvas || !Array.isArray(this.chartData) || this.chartData.length === 0) {
+                        return;
+                    }
+
+                    const canvas = this.$refs.consistencyChartCanvas;
+                    if (!(canvas instanceof HTMLCanvasElement) || !canvas.isConnected) return;
+
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) return;
+
+                    const doneData = this.chartData.map((item) => Number(item.done ?? 0));
+                    const width = canvas.clientWidth;
+                    const height = canvas.clientHeight;
+                    if (width <= 0 || height <= 0) return;
+
+                    const dpr = window.devicePixelRatio || 1;
+                    canvas.width = Math.floor(width * dpr);
+                    canvas.height = Math.floor(height * dpr);
+                    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                    ctx.clearRect(0, 0, width, height);
+
+                    const yMax = Math.max(this.totalStreaks, ...doneData, 1);
+                    const padding = { top: 10, right: 8, bottom: 30, left: 24 };
+                    const chartWidth = width - padding.left - padding.right;
+                    const chartHeight = height - padding.top - padding.bottom;
+                    if (chartWidth <= 0 || chartHeight <= 0) return;
+
+                    const xStep = chartWidth / this.chartData.length;
+                    const barWidth = Math.max(8, Math.min(20, xStep - 8));
+                    const totalLineY = padding.top + chartHeight - (this.totalStreaks / yMax) * chartHeight;
+
+                    ctx.strokeStyle = '#e2e8f0';
+                    ctx.lineWidth = 1;
+                    for (let level = 0; level <= yMax; level++) {
+                        const y = padding.top + chartHeight - (level / yMax) * chartHeight;
+                        ctx.beginPath();
+                        ctx.moveTo(padding.left, y);
+                        ctx.lineTo(width - padding.right, y);
+                        ctx.stroke();
+                    }
+
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.setLineDash([4, 3]);
+                    ctx.beginPath();
+                    ctx.moveTo(padding.left, totalLineY);
+                    ctx.lineTo(width - padding.right, totalLineY);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    this.chartData.forEach((item, index) => {
+                        const done = Math.max(0, Math.min(yMax, Number(item.done ?? 0)));
+                        const xCenter = padding.left + index * xStep + xStep / 2;
+                        const barHeight = (done / yMax) * chartHeight;
+                        const x = xCenter - barWidth / 2;
+                        const y = padding.top + chartHeight - barHeight;
+
+                        ctx.fillStyle = '#6366f1';
+                        const radius = 6;
+                        ctx.beginPath();
+                        ctx.moveTo(x, y + radius);
+                        ctx.arcTo(x, y, x + radius, y, radius);
+                        ctx.arcTo(x + barWidth, y, x + barWidth, y + radius, radius);
+                        ctx.lineTo(x + barWidth, padding.top + chartHeight);
+                        ctx.lineTo(x, padding.top + chartHeight);
+                        ctx.closePath();
+                        ctx.fill();
+
+                        ctx.fillStyle = '#94a3b8';
+                        ctx.font = '9px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(item.weekday ?? '', xCenter, height - 6);
+                    });
+                },
+
+                refreshTodayDoneChart() {
+                    if (!this.hasStreaks || !Array.isArray(this.chartData) || this.chartData.length === 0) {
+                        return;
+                    }
+
+                    const streakIds = Object.keys(this.streakStates);
+                    if (streakIds.length === 0) return;
+
+                    const doneCount = streakIds.reduce((carry, streakId) => {
+                        return carry + (this.getStatus(streakId) === 'done' ? 1 : 0);
+                    }, 0);
+
+                    const targetIndex = this.chartData.findIndex((item) => item.date_key === this.todayDate);
+                    const indexToUpdate = targetIndex >= 0 ? targetIndex : this.chartData.length - 1;
+                    this.chartData[indexToUpdate].done = doneCount;
+                    this.$nextTick(() => {
+                        this.renderConsistencyChart();
+                    });
+                },
+
                 async sendPost(url) {
                     const response = await fetch(url, {
                         method: 'POST',
@@ -364,6 +483,7 @@
                                 this.showStreakIncreased = false;
                             }, 2000);
                         }
+                        this.refreshTodayDoneChart();
                         this.showToastMessage(data.message || 'Marked as done');
                     } catch (error) {
                         event.target.submit();
@@ -380,6 +500,7 @@
                     try {
                         const data = await this.sendPost(event.target.action);
                         this.applyStreakState(data.streak);
+                        this.refreshTodayDoneChart();
                         this.showToastMessage(data.message || 'Marked as skipped');
                     } catch (error) {
                         event.target.submit();
@@ -398,6 +519,7 @@
                         if (Array.isArray(data.streaks)) {
                             data.streaks.forEach((streak) => this.applyStreakState(streak));
                         }
+                        this.refreshTodayDoneChart();
                         this.showToastMessage(data.message || 'Marked as done');
                     } catch (error) {
                         event.target.submit();
@@ -464,7 +586,6 @@
 
                 setupInstallPrompt() {
                     window.addEventListener('beforeinstallprompt', (event) => {
-                        event.preventDefault();
                         this.installPromptEvent = event;
                         this.showInstallPrompt = true;
                     });
