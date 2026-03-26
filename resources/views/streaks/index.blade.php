@@ -269,13 +269,15 @@
             @endif
         </div>
 
-        <div x-show="showInstallPrompt" x-cloak class="fixed inset-x-0 bottom-20 z-40 flex justify-center px-4">
+        <div class="fixed inset-x-0 bottom-20 z-[60] flex justify-center px-4">
             <button
                 type="button"
                 @click="installApp()"
+                x-show="showInstallPrompt"
                 class="inline-flex min-h-10 items-center justify-center rounded-full bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md transition duration-200 hover:bg-indigo-500 active:scale-95"
+                :title="installUnsupported ? 'Use Chrome or Edge to install this app' : 'Install app'"
             >
-                {{ __('Install App 📲') }}
+                <span x-text="installUnsupported ? 'Install Help' : 'Install App 📲'"></span>
             </button>
         </div>
     </div>
@@ -300,6 +302,7 @@
                 reminderTimeout: null,
                 installPromptEvent: null,
                 showInstallPrompt: false,
+                installUnsupported: false,
 
                 init() {
                     if (this.showStreakIncreased) {
@@ -585,14 +588,28 @@
                 },
 
                 setupInstallPrompt() {
+                    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+                        this.showInstallPrompt = false;
+                        return;
+                    }
+
+                    // Keep CTA visible unless app is already installed in standalone mode.
+                    this.showInstallPrompt = true;
+                    this.installUnsupported = true;
+
                     window.addEventListener('beforeinstallprompt', (event) => {
+                        event.preventDefault();
                         this.installPromptEvent = event;
+                        this.installUnsupported = false;
                         this.showInstallPrompt = true;
                     });
                 },
 
                 async installApp() {
-                    if (!this.installPromptEvent) return;
+                    if (!this.installPromptEvent) {
+                        this.showToastMessage('Install is available in Chrome/Edge. Open there to install.');
+                        return;
+                    }
 
                     this.installPromptEvent.prompt();
                     await this.installPromptEvent.userChoice;
