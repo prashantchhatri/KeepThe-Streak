@@ -30,13 +30,36 @@
         <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @endif
 </head>
+@php
+    $guestBackFallback = match (true) {
+        request()->routeIs('verification.*'), request()->routeIs('password.confirm') => route('dashboard'),
+        request()->routeIs('register'),
+        request()->routeIs('password.request'),
+        request()->routeIs('password.reset') => route('login'),
+        default => null,
+    };
+
+    $showGuestBackButton = $guestBackFallback !== null;
+@endphp
 <body class="bg-slate-100 font-sans antialiased text-slate-900 dark:bg-slate-950 dark:text-slate-100">
     <div class="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-100 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <div class="pointer-events-none absolute -left-12 -top-20 h-72 w-72 rounded-full bg-indigo-100/80 blur-3xl dark:bg-indigo-500/10"></div>
         <div class="pointer-events-none absolute -bottom-28 right-0 h-96 w-96 rounded-full bg-slate-200/70 blur-3xl dark:bg-slate-700/30"></div>
 
         <div class="relative mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-8">
-            <div class="mb-4 flex justify-end">
+            <div class="mb-4 flex items-center justify-between gap-3">
+                @if ($showGuestBackButton)
+                    <button
+                        type="button"
+                        onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = '{{ $guestBackFallback }}'; }"
+                        class="inline-flex min-h-10 items-center justify-center rounded-xl bg-white/90 px-3 text-sm font-medium text-slate-700 shadow-sm transition duration-200 hover:bg-slate-100 active:scale-95 dark:bg-slate-900/90 dark:text-slate-200 dark:hover:bg-slate-800"
+                    >
+                        ← {{ __('Back') }}
+                    </button>
+                @else
+                    <div class="h-10 w-10"></div>
+                @endif
+
                 <x-theme-toggle />
             </div>
 
