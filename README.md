@@ -7,6 +7,39 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## SMTP Setup
+
+This project is now prepared to use Brevo SMTP as the default mail transport through environment variables. Brevo currently offers a free plan with 300 emails per day.
+
+Use these values in Railway:
+
+```env
+APP_URL=https://your-app.up.railway.app
+
+MAIL_MAILER=smtp
+MAIL_SCHEME=null
+MAIL_HOST=smtp-relay.brevo.com
+MAIL_PORT=587
+MAIL_USERNAME=your-brevo-smtp-login@example.com
+MAIL_PASSWORD=your-brevo-smtp-key
+MAIL_FROM_ADDRESS=no-reply@your-domain.com
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+Setup steps:
+
+1. Create a free Brevo account.
+2. Generate an SMTP key in `Settings > SMTP & API`.
+3. Copy the SMTP login email and SMTP key into Railway as `MAIL_USERNAME` and `MAIL_PASSWORD`.
+4. Verify your sender email or authenticate your domain in Brevo before testing password resets.
+5. Set `APP_URL` in Railway to your live Railway domain so reset links point to production instead of localhost.
+
+Notes:
+
+- Start with port `587`. Brevo recommends it as the default SMTP submission port.
+- If your host blocks `587`, Brevo also supports `2525` and `465`.
+- Laravel already has SMTP support in `config/mail.php`, so no extra package is required for this provider.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
