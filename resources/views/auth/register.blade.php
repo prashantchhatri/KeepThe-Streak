@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-6 text-center">
-        <h1 class="mb-2 text-2xl font-semibold tracking-tight text-slate-900">{{ __('Create your account') }}</h1>
-        <p class="text-sm text-slate-500">{{ __('Start tracking progress with KeepTheStreak.') }}</p>
+        <h1 class="mb-2 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">{{ __('Create your account') }}</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('Start tracking progress with KeepTheStreak.') }}</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}">
@@ -45,7 +45,7 @@
         </div>
 
         <div class="mt-6 flex items-center justify-between gap-3">
-            <a class="text-sm font-medium text-slate-600 transition hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" href="{{ route('login') }}">
+            <a class="text-sm font-medium text-slate-600 transition hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-white dark:text-slate-300 dark:hover:text-slate-100 dark:focus:ring-offset-slate-900" href="{{ route('login') }}">
                 {{ __('Already registered?') }}
             </a>
 

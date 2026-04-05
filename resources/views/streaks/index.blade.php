@@ -1,8 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
-            <h1 class="text-base font-semibold text-slate-900">{{ __('Dashboard') }}</h1>
-            <span class="text-xs text-slate-400">{{ now()->format('d M Y') }}</span>
+            <h1 class="text-base font-semibold text-slate-900 dark:text-slate-100">{{ __('Dashboard') }}</h1>
+            <span class="text-xs text-slate-400 dark:text-slate-500">{{ now()->format('d M Y') }}</span>
         </div>
     </x-slot>
 
@@ -44,7 +44,7 @@
                 x-transition:leave="transform transition ease-in duration-200"
                 x-transition:leave-start="opacity-100 translate-y-0"
                 x-transition:leave-end="opacity-0 -translate-y-2"
-                class="rounded-xl bg-green-100 px-4 py-2 text-sm font-semibold text-green-700 shadow-md"
+                class="rounded-xl bg-green-100 px-4 py-2 text-sm font-semibold text-green-700 shadow-md dark:bg-emerald-950/80 dark:text-emerald-300"
                 x-cloak
             >
                 🔥 {{ __('Streak increased!') }}
@@ -60,7 +60,7 @@
                 x-transition:leave="transform transition ease-in duration-150"
                 x-transition:leave-start="opacity-100 translate-y-0"
                 x-transition:leave-end="opacity-0 translate-y-2"
-                class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-lg"
+                class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-lg dark:bg-slate-100 dark:text-slate-900"
                 x-text="toastMessage"
                 x-cloak
             ></div>
@@ -68,16 +68,16 @@
 
         <div class="space-y-4">
             @if (session('status'))
-                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-900/80 dark:bg-emerald-950/40 dark:text-emerald-300">
                     {{ session('status') }}
                 </div>
             @endif
 
             @if ($hasStreaks)
-                <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20">
                     <div class="mb-3 flex items-center justify-between gap-3">
-                        <h2 class="text-sm font-semibold text-slate-900">{{ __('Your Consistency (Last 7 Days)') }}</h2>
-                        <span class="text-xs text-slate-400">{{ __('Last 7 days') }}</span>
+                        <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ __('Your Consistency (Last 7 Days)') }}</h2>
+                        <span class="text-xs text-slate-400 dark:text-slate-500">{{ __('Last 7 days') }}</span>
                     </div>
                     <div class="h-32">
                         <canvas x-ref="consistencyChartCanvas" class="h-32 w-full"></canvas>
@@ -101,8 +101,8 @@
             @if ($hasStreaks)
                 <div class="mb-6 flex items-center justify-between gap-3">
                     <div>
-                        <h1 class="text-xl font-semibold text-slate-900">{{ __('Your Streaks') }}</h1>
-                        <p class="text-sm text-slate-500">{{ __('Track consistency day by day.') }}</p>
+                        <h1 class="text-xl font-semibold text-slate-900 dark:text-slate-100">{{ __('Your Streaks') }}</h1>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">{{ __('Track consistency day by day.') }}</p>
                     </div>
 
                     <button
@@ -114,10 +114,10 @@
                     </button>
                 </div>
             @else
-                <div class="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-md">
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-md dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20">
                     <img src="/images/logo.png" alt="KeepTheStreak" class="mx-auto h-12 w-auto">
-                    <h1 class="mt-4 text-lg font-semibold text-slate-900">{{ __('Welcome to KeepTheStreak 👋') }}</h1>
-                    <p class="mt-1 text-sm text-gray-500">{{ __('Start building consistency today.') }}</p>
+                    <h1 class="mt-4 text-lg font-semibold text-slate-900 dark:text-slate-100">{{ __('Welcome to KeepTheStreak 👋') }}</h1>
+                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ __('Start building consistency today.') }}</p>
 
                     <button
                         type="button"
@@ -127,16 +127,16 @@
                         + {{ __('Create Your First Streak') }}
                     </button>
 
-                    <p class="mt-4 text-xs text-gray-400">{{ __('Consistency builds today. Success defines tomorrow.') }}</p>
+                    <p class="mt-4 text-xs text-slate-400 dark:text-slate-500">{{ __('Consistency builds today. Success defines tomorrow.') }}</p>
                 </div>
             @endif
 
-            <div x-show="showForm" x-transition class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div x-show="showForm" x-transition class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/20">
                 <form method="POST" action="{{ route('streaks.store') }}" class="space-y-3">
                     @csrf
 
                     <div>
-                        <label for="name" class="mb-1 block text-sm font-medium text-slate-700">{{ __('Streak name') }}</label>
+                        <label for="name" class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{{ __('Streak name') }}</label>
                         <input
                             id="name"
                             name="name"
@@ -144,15 +144,15 @@
                             value="{{ old('name') }}"
                             maxlength="100"
                             required
-                            class="w-full rounded-xl border-slate-200 px-3.5 py-2.5 text-sm text-slate-700 shadow-sm focus:border-indigo-400 focus:ring-indigo-400"
+                            class="w-full rounded-xl border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm focus:border-indigo-400 focus:ring-indigo-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-500 dark:focus:ring-indigo-500"
                             placeholder="{{ __('e.g. Morning workout') }}"
                         >
                         @error('name')
-                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            <p class="mt-2 text-sm text-red-600 dark:text-rose-400">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <button type="submit" class="inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:bg-slate-800 active:scale-95">
+                    <button type="submit" class="inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:bg-slate-800 active:scale-95 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200">
                         {{ __('Save') }}
                     </button>
                 </form>
@@ -169,16 +169,16 @@
                         @endphp
 
                         <div @class([
-                            'rounded-2xl border bg-white p-4 shadow-sm',
-                            'border-yellow-300' => $isBestEver,
-                            'border-slate-200' => ! $isBestEver,
+                            'rounded-2xl border bg-white p-4 shadow-sm dark:bg-slate-900 dark:shadow-black/20',
+                            'border-yellow-300 dark:border-yellow-700' => $isBestEver,
+                            'border-slate-200 dark:border-slate-800' => ! $isBestEver,
                         ])>
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <div class="flex items-center gap-2">
-                                        <h2 class="text-base font-bold text-slate-900">{{ $streak->name }}</h2>
+                                        <h2 class="text-base font-bold text-slate-900 dark:text-slate-100">{{ $streak->name }}</h2>
                                         <span
-                                            class="rounded-full bg-yellow-100 px-2 py-1 text-xs text-yellow-700"
+                                            class="rounded-full bg-yellow-100 px-2 py-1 text-xs text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-200"
                                             x-show="isBestEver({{ $streak->id }})"
                                             @if (! $isBestEver) style="display: none;" @endif
                                         >
@@ -188,14 +188,14 @@
 
                                     <div class="mt-2">
                                         <span
-                                            class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700"
+                                            class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
                                             x-show="getStatus({{ $streak->id }}) === 'done'"
                                             @if (($todayLog?->status ?? null) !== 'done') style="display: none;" @endif
                                         >
                                             {{ __('Done ✅') }}
                                         </span>
                                         <span
-                                            class="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700"
+                                            class="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
                                             x-show="getStatus({{ $streak->id }}) === 'skipped'"
                                             @if (($todayLog?->status ?? null) !== 'skipped') style="display: none;" @endif
                                         >
@@ -206,7 +206,7 @@
 
                                 <form method="POST" action="{{ route('streaks.delete', $streak->id) }}" onsubmit="return confirm('Delete this streak?');">
                                     @csrf
-                                    <button type="submit" class="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg bg-rose-50 px-2 text-rose-600 transition duration-200 hover:bg-rose-100 active:scale-95" aria-label="{{ __('Delete streak') }}">
+                                    <button type="submit" class="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg bg-rose-50 px-2 text-rose-600 transition duration-200 hover:bg-rose-100 active:scale-95 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-950/50" aria-label="{{ __('Delete streak') }}">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd" d="M8.5 2a1 1 0 00-1 1v1H5a1 1 0 100 2h.35l.69 9.08A2 2 0 008.03 17h3.94a2 2 0 001.99-1.92L14.65 6H15a1 1 0 100-2h-2.5V3a1 1 0 00-1-1h-3zM9.5 4V3h1v1h-1zM8 8a1 1 0 012 0v5a1 1 0 11-2 0V8zm4-1a1 1 0 00-1 1v5a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                                         </svg>
@@ -214,26 +214,26 @@
                                 </form>
                             </div>
 
-                            <div class="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                                <div class="space-y-1 text-sm text-gray-500">
+                            <div class="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950/60">
+                                <div class="space-y-1 text-sm text-slate-500 dark:text-slate-400">
                                     <p>🔥 {{ __('Current:') }} <span x-text="getStats({{ $streak->id }}).current">{{ $stats['current'] }}</span> {{ __('days') }}</p>
                                     <p>🏆 {{ __('Best:') }} <span x-text="getStats({{ $streak->id }}).longest">{{ $stats['longest'] }}</span> {{ __('days') }}</p>
                                 </div>
 
                                 <div class="mt-3">
-                                    <div class="h-2 overflow-hidden rounded-full bg-gray-200">
+                                    <div class="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                                         <div
-                                            class="h-2 rounded-full bg-green-500 transition-all duration-300"
+                                            class="h-2 rounded-full bg-green-500 transition-all duration-300 dark:bg-emerald-400"
                                             style="width: {{ $stats['percentage'] }}%;"
                                             :style="`width: ${getStats({{ $streak->id }}).percentage}%`"
                                         ></div>
                                     </div>
-                                    <p class="mt-2 text-sm text-gray-500">
+                                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
                                         <span x-text="getStats({{ $streak->id }}).percentage">{{ $stats['percentage'] }}</span>% {{ __('consistency') }}
                                     </p>
                                 </div>
 
-                                <a href="{{ route('streaks.calendar', $streak->id) }}" class="mt-3 inline-flex min-h-10 items-center justify-center rounded-xl bg-slate-100 px-3 text-sm font-medium text-slate-700 transition duration-200 hover:bg-slate-200 active:scale-95">
+                                <a href="{{ route('streaks.calendar', $streak->id) }}" class="mt-3 inline-flex min-h-10 items-center justify-center rounded-xl bg-slate-100 px-3 text-sm font-medium text-slate-700 transition duration-200 hover:bg-slate-200 active:scale-95 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
                                     {{ __('View Calendar') }}
                                 </a>
                             </div>
@@ -314,6 +314,9 @@
                     this.$nextTick(() => {
                         this.renderConsistencyChart();
                     });
+                    window.addEventListener('keepthestreak-theme-changed', () => {
+                        this.$nextTick(() => this.renderConsistencyChart());
+                    });
                     window.addEventListener('resize', () => {
                         clearTimeout(this.chartResizeTimer);
                         this.chartResizeTimer = setTimeout(() => this.renderConsistencyChart(), 120);
@@ -391,8 +394,9 @@
                     const xStep = chartWidth / this.chartData.length;
                     const barWidth = Math.max(8, Math.min(20, xStep - 8));
                     const totalLineY = padding.top + chartHeight - (this.totalStreaks / yMax) * chartHeight;
+                    const isDarkTheme = document.documentElement.classList.contains('dark');
 
-                    ctx.strokeStyle = '#e2e8f0';
+                    ctx.strokeStyle = isDarkTheme ? '#1e293b' : '#e2e8f0';
                     ctx.lineWidth = 1;
                     for (let level = 0; level <= yMax; level++) {
                         const y = padding.top + chartHeight - (level / yMax) * chartHeight;
@@ -402,7 +406,7 @@
                         ctx.stroke();
                     }
 
-                    ctx.strokeStyle = '#94a3b8';
+                    ctx.strokeStyle = isDarkTheme ? '#64748b' : '#94a3b8';
                     ctx.setLineDash([4, 3]);
                     ctx.beginPath();
                     ctx.moveTo(padding.left, totalLineY);
@@ -417,7 +421,7 @@
                         const x = xCenter - barWidth / 2;
                         const y = padding.top + chartHeight - barHeight;
 
-                        ctx.fillStyle = '#6366f1';
+                        ctx.fillStyle = isDarkTheme ? '#818cf8' : '#6366f1';
                         const radius = 6;
                         ctx.beginPath();
                         ctx.moveTo(x, y + radius);
@@ -428,7 +432,7 @@
                         ctx.closePath();
                         ctx.fill();
 
-                        ctx.fillStyle = '#94a3b8';
+                        ctx.fillStyle = isDarkTheme ? '#cbd5e1' : '#94a3b8';
                         ctx.font = '9px sans-serif';
                         ctx.textAlign = 'center';
                         ctx.fillText(item.weekday ?? '', xCenter, height - 6);
