@@ -15,7 +15,11 @@
 
     @include('layouts.partials.theme-head')
 
-    @if (! app()->environment('local') || file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+    @php
+        $hasViteAssets = file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot'));
+    @endphp
+
+    @if ($hasViteAssets)
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @else
         <script>
