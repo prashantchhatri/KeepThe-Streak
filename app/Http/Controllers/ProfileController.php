@@ -87,6 +87,12 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        if ($user->isSuperAdmin()) {
+            return Redirect::route('profile.edit')->withErrors([
+                'password' => 'The super admin account cannot be deleted.',
+            ], 'userDeletion');
+        }
+
         Auth::logout();
 
         $user->delete();

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StreakController;
 use Illuminate\Support\Facades\Route;
@@ -8,7 +9,12 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'active.user'])->group(function () {
+    Route::middleware('admin')->prefix('admin')->group(function () {
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+        Route::patch('/users/{user}/status', [AdminDashboardController::class, 'updateStatus'])->name('admin.users.status');
+    });
+
     Route::get('/dashboard', [StreakController::class, 'index'])->name('dashboard');
     Route::resource('streaks', StreakController::class)->only(['index', 'store', 'destroy']);
     Route::get('/streaks/{id}/calendar', [StreakController::class, 'calendar'])->name('streaks.calendar');
