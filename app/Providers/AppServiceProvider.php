@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -26,9 +27,26 @@ class AppServiceProvider extends ServiceProvider
     {
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
+            $this->clearStaleViewCacheWhenViteManifestIsMissing();
         }
 
         $this->configureAuthMailNotifications();
+    }
+
+    private function clearStaleViewCacheWhenViteManifestIsMissing(): void
+    {
+        if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot'))) {
+            return;
+        }
+
+        $marker = storage_path('framework/vite-manifest-missing-view-cache-cleared');
+
+        if (file_exists($marker)) {
+            return;
+        }
+
+        Artisan::call('view:clear');
+        @file_put_contents($marker, now()->toIso8601String());
     }
 
     private function configureAuthMailNotifications(): void
