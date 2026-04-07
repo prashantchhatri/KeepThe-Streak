@@ -20,6 +20,7 @@ RUN composer install \
     --no-interaction \
     --no-progress \
     --prefer-dist \
+    --no-scripts \
     --optimize-autoloader
 
 FROM php:8.2-apache
@@ -29,10 +30,11 @@ WORKDIR /var/www/html
 RUN apt-get update && apt-get install -y \
     git \
     libpq-dev \
+    libsqlite3-dev \
     libzip-dev \
     unzip \
     zip \
-    && docker-php-ext-install pdo_pgsql pdo_mysql zip \
+    && docker-php-ext-install pdo_pgsql pdo_mysql pdo_sqlite zip \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
